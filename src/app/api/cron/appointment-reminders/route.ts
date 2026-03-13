@@ -6,9 +6,13 @@ import {
   buildCancelAppointmentUrl,
   buildRescheduleRequestUrl,
 } from "@/lib/reminders";
-import { appointmentReminderTemplate } from "@/lib/email-templates";
+import {
+  appointmentReminderTemplate,
+  appointmentReminderWhatsAppText,
+} from "@/lib/email-templates";
 import { AppointmentModel } from "@/models/Appointment";
 import { ClinicSettingsModel } from "@/models/ClinicSettings";
+import { sendWhatsAppMessage } from "@/lib/whatsapp";
 
 export async function GET(request: Request) {
   const cronSecret = process.env.CRON_SECRET?.trim();
@@ -69,7 +73,24 @@ export async function GET(request: Request) {
       html,
     });
 
-    if (!result.skipped) {
+    const whatsappResult = await sendWhatsAppMessage({
+      to: appointment.patientId?.phone as string | undefined,
+      body: appointmentReminderWhatsAppText({
+        clinic,
+        appointment: {
+          patientName: appointment.patientId?.fullName || "Patient",
+          doctorName: appointment.doctorId?.name || "Doctor",
+          date: appointment.appointmentDate as string,
+          startTime: appointment.startTime as string,
+          endTime: appointment.endTime as string,
+          reason: (appointment.reason as string) || "General consultation",
+        },
+        cancelUrl: buildCancelAppointmentUrl(token),
+        rescheduleUrl: buildRescheduleRequestUrl(token),
+      }),
+    });
+
+    if (!result.skipped || !whatsappResult.skipped) {
       await AppointmentModel.updateOne({ _id: appointment._id }, { reminderSentAt: new Date() });
       sent += 1;
     }

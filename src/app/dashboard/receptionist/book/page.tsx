@@ -4,6 +4,7 @@ import { getAvailableSlots } from "@/lib/appointments";
 import { getDoctors, getPatients } from "@/lib/queries";
 import { requireRole } from "@/lib/server-auth";
 import { createAppointmentAction } from "@/app/dashboard/receptionist/actions";
+import { AddPatientInline } from "./AddPatientInline";
 
 type ReceptionBookPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -81,14 +82,17 @@ export default async function ReceptionBookPage({ searchParams }: ReceptionBookP
         <form action={createAppointmentAction} className="mt-3 space-y-2">
           <input type="hidden" name="slotMinutes" value={String(slotMinutes)} />
 
-          <select name="patientId" required className="w-full border-2 border-black px-3 py-2">
-            <option value="">Select patient</option>
-            {patients.map((patient) => (
-              <option key={String(patient._id)} value={String(patient._id)}>
-                {patient.fullName} | {patient.phone}
-              </option>
-            ))}
-          </select>
+          <div>
+            <select name="patientId" required className="w-full border-2 border-black px-3 py-2">
+              <option value="">Select patient</option>
+              {patients.map((patient) => (
+                <option key={String(patient._id)} value={String(patient._id)}>
+                  {patient.fullName} | {patient.phone}
+                </option>
+              ))}
+            </select>
+            <AddPatientInline />
+          </div>
 
           <select name="doctorId" required defaultValue={selectedDoctorForSlots} className="w-full border-2 border-black px-3 py-2">
             <option value="">Select doctor</option>

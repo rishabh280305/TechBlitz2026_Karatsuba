@@ -11,12 +11,18 @@ import { NotificationModel } from "@/models/Notification";
 import { PatientModel } from "@/models/Patient";
 import { getAvailableSlots, hasDoctorConflict } from "@/lib/appointments";
 import { combineDateAndTime } from "@/lib/time";
-import { appointmentCancelledTemplate, appointmentConfirmationTemplate } from "@/lib/email-templates";
+import {
+  appointmentCancelledTemplate,
+  appointmentCancelledWhatsAppText,
+  appointmentConfirmationTemplate,
+  appointmentConfirmationWhatsAppText,
+} from "@/lib/email-templates";
 import {
   buildCancelAppointmentUrl,
   buildRescheduleRequestUrl,
   sendAppointmentEmail,
 } from "@/lib/reminders";
+import { sendWhatsAppMessage } from "@/lib/whatsapp";
 
 const patientSchema = z.object({
   fullName: z.string().min(2),
@@ -67,6 +73,7 @@ export async function addPatientAction(formData: FormData) {
 
   revalidatePath("/dashboard/receptionist");
   revalidatePath("/dashboard/receptionist/patients");
+  revalidatePath("/dashboard/receptionist/book");
 }
 
 export async function updatePatientAction(formData: FormData) {
@@ -193,8 +200,33 @@ export async function createAppointmentAction(formData: FormData) {
     }),
   });
 
+  await sendWhatsAppMessage({
+    to: populated.patientId?.phone,
+    body: appointmentConfirmationWhatsAppText({
+      clinic: {
+        clinicName,
+        address: [clinicSettings?.addressLine1, clinicSettings?.addressLine2, clinicSettings?.city, clinicSettings?.state, clinicSettings?.postalCode, clinicSettings?.country]
+          .filter(Boolean)
+          .join(", "),
+        phone: clinicSettings?.contactPhone || "",
+        email: clinicSettings?.contactEmail || "",
+        website: clinicSettings?.website || "",
+      },
+      appointment: {
+        patientName,
+        doctorName,
+        date: parsed.data.appointmentDate,
+        startTime: selectedSlot.startTime,
+        endTime: selectedSlot.endTime,
+        reason,
+      },
+      cancelUrl: buildCancelAppointmentUrl(String(appointment.patientCancelToken)),
+      rescheduleUrl: buildRescheduleRequestUrl(String(appointment.patientCancelToken)),
+    }),
+  });
+
   if (emailResult.skipped) {
-    throw new Error("Appointment created but email could not be sent. Check RESEND_FROM_EMAIL and Resend domain setup.");
+    console.warn("Appointment created but confirmation email could not be sent.", emailResult.reason);
   }
 
   revalidatePath("/dashboard/receptionist");
@@ -224,6 +256,30 @@ export async function cancelAppointmentAction(formData: FormData) {
       to: appointment.patientId?.email,
       subject: `Appointment Cancelled - ${clinicName}`,
       html: appointmentCancelledTemplate({
+        clinic: {
+          clinicName,
+          address: [clinicSettings?.addressLine1, clinicSettings?.addressLine2, clinicSettings?.city, clinicSettings?.state, clinicSettings?.postalCode, clinicSettings?.country]
+            .filter(Boolean)
+            .join(", "),
+          phone: clinicSettings?.contactPhone || "",
+          email: clinicSettings?.contactEmail || "",
+          website: clinicSettings?.website || "",
+        },
+        appointment: {
+          patientName: appointment.patientId?.fullName || "Patient",
+          doctorName: appointment.doctorId?.name || "Doctor",
+          date: appointment.appointmentDate,
+          startTime: appointment.startTime,
+          endTime: appointment.endTime,
+          reason: appointment.reason || "General consultation",
+        },
+        reason,
+      }),
+    });
+
+    await sendWhatsAppMessage({
+      to: appointment.patientId?.phone,
+      body: appointmentCancelledWhatsAppText({
         clinic: {
           clinicName,
           address: [clinicSettings?.addressLine1, clinicSettings?.addressLine2, clinicSettings?.city, clinicSettings?.state, clinicSettings?.postalCode, clinicSettings?.country]
@@ -320,6 +376,31 @@ export async function rescheduleAppointmentAction(formData: FormData) {
     to: appointment.patientId?.email,
     subject: `Appointment Rescheduled - ${clinicName}`,
     html: appointmentConfirmationTemplate({
+      clinic: {
+        clinicName,
+        address: [clinicSettings?.addressLine1, clinicSettings?.addressLine2, clinicSettings?.city, clinicSettings?.state, clinicSettings?.postalCode, clinicSettings?.country]
+          .filter(Boolean)
+          .join(", "),
+        phone: clinicSettings?.contactPhone || "",
+        email: clinicSettings?.contactEmail || "",
+        website: clinicSettings?.website || "",
+      },
+      appointment: {
+        patientName: appointment.patientId?.fullName || "Patient",
+        doctorName: appointment.doctorId?.name || "Doctor",
+        date: appointmentDate,
+        startTime,
+        endTime: appointment.endTime,
+        reason: appointment.reason || "General consultation",
+      },
+      cancelUrl: buildCancelAppointmentUrl(String(appointment.patientCancelToken)),
+      rescheduleUrl: buildRescheduleRequestUrl(String(appointment.patientCancelToken)),
+    }),
+  });
+
+  await sendWhatsAppMessage({
+    to: appointment.patientId?.phone,
+    body: appointmentConfirmationWhatsAppText({
       clinic: {
         clinicName,
         address: [clinicSettings?.addressLine1, clinicSettings?.addressLine2, clinicSettings?.city, clinicSettings?.state, clinicSettings?.postalCode, clinicSettings?.country]
@@ -455,6 +536,31 @@ export async function approveRescheduleRequestAction(formData: FormData) {
     to: appointment.patientId?.email,
     subject: `Appointment Rescheduled - ${clinicName}`,
     html: appointmentConfirmationTemplate({
+      clinic: {
+        clinicName,
+        address: [clinicSettings?.addressLine1, clinicSettings?.addressLine2, clinicSettings?.city, clinicSettings?.state, clinicSettings?.postalCode, clinicSettings?.country]
+          .filter(Boolean)
+          .join(", "),
+        phone: clinicSettings?.contactPhone || "",
+        email: clinicSettings?.contactEmail || "",
+        website: clinicSettings?.website || "",
+      },
+      appointment: {
+        patientName: appointment.patientId?.fullName || "Patient",
+        doctorName: appointment.doctorId?.name || "Doctor",
+        date: appointment.appointmentDate,
+        startTime: appointment.startTime,
+        endTime: appointment.endTime,
+        reason: appointment.reason || "General consultation",
+      },
+      cancelUrl: buildCancelAppointmentUrl(String(appointment.patientCancelToken)),
+      rescheduleUrl: buildRescheduleRequestUrl(String(appointment.patientCancelToken)),
+    }),
+  });
+
+  await sendWhatsAppMessage({
+    to: appointment.patientId?.phone,
+    body: appointmentConfirmationWhatsAppText({
       clinic: {
         clinicName,
         address: [clinicSettings?.addressLine1, clinicSettings?.addressLine2, clinicSettings?.city, clinicSettings?.state, clinicSettings?.postalCode, clinicSettings?.country]

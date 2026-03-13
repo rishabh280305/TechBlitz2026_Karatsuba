@@ -117,3 +117,55 @@ export function appointmentCancelledTemplate(params: {
 
   return shell("Appointment Cancelled", "Cancellation Notice", content, params.clinic);
 }
+
+export function appointmentConfirmationWhatsAppText(params: {
+  clinic: ClinicInfo;
+  appointment: AppointmentInfo;
+  cancelUrl: string;
+  rescheduleUrl?: string;
+}) {
+  return [
+    `Appointment confirmed - ${params.clinic.clinicName}`,
+    `Patient: ${params.appointment.patientName}`,
+    `Doctor: ${params.appointment.doctorName}`,
+    `Date: ${params.appointment.date}`,
+    `Time: ${params.appointment.startTime} - ${params.appointment.endTime}`,
+    `Reason: ${params.appointment.reason || "General consultation"}`,
+    `Cancel: ${params.cancelUrl}`,
+    params.rescheduleUrl ? `Reschedule: ${params.rescheduleUrl}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+export function appointmentReminderWhatsAppText(params: {
+  clinic: ClinicInfo;
+  appointment: AppointmentInfo;
+  cancelUrl: string;
+  rescheduleUrl?: string;
+}) {
+  return [
+    `Reminder from ${params.clinic.clinicName}`,
+    `Appointment tomorrow with ${params.appointment.doctorName}`,
+    `Date: ${params.appointment.date}`,
+    `Time: ${params.appointment.startTime} - ${params.appointment.endTime}`,
+    `Cancel: ${params.cancelUrl}`,
+    params.rescheduleUrl ? `Reschedule: ${params.rescheduleUrl}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+export function appointmentCancelledWhatsAppText(params: {
+  clinic: ClinicInfo;
+  appointment: AppointmentInfo;
+  reason: string;
+}) {
+  return [
+    `Appointment cancelled - ${params.clinic.clinicName}`,
+    `Doctor: ${params.appointment.doctorName}`,
+    `Date: ${params.appointment.date}`,
+    `Time: ${params.appointment.startTime} - ${params.appointment.endTime}`,
+    `Reason: ${params.reason || "No reason provided"}`,
+  ].join("\n");
+}
