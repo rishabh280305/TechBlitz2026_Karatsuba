@@ -56,27 +56,6 @@ export async function completeAppointmentAction(formData: FormData) {
   revalidatePath("/dashboard/receptionist");
 }
 
-export async function markNoShowAction(formData: FormData) {
-  const session = await requireRole("DOCTOR");
-  await connectToDatabase();
-
-  const appointmentId = String(formData.get("appointmentId") ?? "");
-
-  await AppointmentModel.updateOne(
-    {
-      _id: appointmentId,
-      doctorId: session.user.id,
-      clinicId: session.user.clinicId,
-    },
-    {
-      status: "NO_SHOW",
-    },
-  );
-
-  revalidatePath("/dashboard/doctor");
-  revalidatePath("/dashboard/receptionist");
-}
-
 export async function blockTimeSlotAction(formData: FormData) {
   const session = await requireRole("DOCTOR");
   await connectToDatabase();

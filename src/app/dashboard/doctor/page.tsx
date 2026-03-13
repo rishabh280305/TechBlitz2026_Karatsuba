@@ -5,7 +5,6 @@ import { requireRole } from "@/lib/server-auth";
 import {
   blockTimeSlotAction,
   completeAppointmentAction,
-  markNoShowAction,
 } from "@/app/dashboard/doctor/actions";
 import { ScheduleAiSummary } from "@/components/doctor/ScheduleAiSummary";
 import { PatientFilesPanel } from "@/components/doctor/PatientFilesPanel";
@@ -80,19 +79,12 @@ export default async function DoctorDashboardPage({ searchParams }: DoctorPagePr
                   <p className="text-sm">Reason: {appointment.reason || "General consultation"}</p>
                   {appointment.notes ? <p className="text-sm">Notes: {appointment.notes}</p> : null}
 
-                  <div className="mt-3 grid gap-2 md:grid-cols-2">
+                  <div className="mt-3">
                     <form action={completeAppointmentAction} className="space-y-2">
                       <input type="hidden" name="appointmentId" value={String(appointment._id)} />
                       <textarea name="notes" placeholder="Visit notes / prescription" className="w-full border-2 border-black bg-white px-3 py-2" />
                       <button disabled={dbUnavailable} className="w-full border-2 border-black bg-black px-3 py-2 font-semibold text-white disabled:opacity-50">
                         Mark Completed
-                      </button>
-                    </form>
-
-                    <form action={markNoShowAction} className="space-y-2">
-                      <input type="hidden" name="appointmentId" value={String(appointment._id)} />
-                      <button disabled={dbUnavailable} className="w-full border-2 border-black bg-white px-3 py-2 font-semibold disabled:opacity-50">
-                        Mark No-show
                       </button>
                     </form>
                   </div>
@@ -148,14 +140,6 @@ export default async function DoctorDashboardPage({ searchParams }: DoctorPagePr
           </form>
         </div>
 
-        <div className="border-2 border-black bg-white p-4 text-sm shadow-[6px_6px_0_0_#000]">
-          <h3 className="text-base font-black">Quick Notes</h3>
-          <ul className="mt-2 space-y-1">
-            <li>Only active bookings are shown in conflict checks.</li>
-            <li>Blocking a slot removes it from receptionist booking options.</li>
-            <li>Completed and no-show statuses are persisted for reporting.</li>
-          </ul>
-        </div>
       </section>
     </div>
   );

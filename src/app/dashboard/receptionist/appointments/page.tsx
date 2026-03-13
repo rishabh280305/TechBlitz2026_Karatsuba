@@ -2,7 +2,11 @@ import { format } from "date-fns";
 import { connectToDatabase } from "@/lib/db";
 import { getAppointmentsByDate, getDoctors } from "@/lib/queries";
 import { requireRole } from "@/lib/server-auth";
-import { cancelAppointmentAction, rescheduleAppointmentAction } from "@/app/dashboard/receptionist/actions";
+import {
+  cancelAppointmentAction,
+  markNoShowAppointmentAction,
+  rescheduleAppointmentAction,
+} from "@/app/dashboard/receptionist/actions";
 
 type ReceptionAppointmentsPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -71,11 +75,16 @@ export default async function ReceptionAppointmentsPage({ searchParams }: Recept
               <p className="text-sm">Doctor: {appointment.doctorId?.name}</p>
               <p className="text-sm">Reason: {appointment.reason || "General consultation"}</p>
 
-              <div className="mt-3 grid gap-2 md:grid-cols-2">
+              <div className="mt-3 grid gap-2 md:grid-cols-3">
                 <form action={cancelAppointmentAction} className="space-y-2">
                   <input type="hidden" name="appointmentId" value={String(appointment._id)} />
                   <input name="cancellationReason" placeholder="Cancellation reason" className="w-full border-2 border-black bg-white px-3 py-2" />
                   <button disabled={dbUnavailable} className="w-full border-2 border-black bg-white px-3 py-2 font-semibold disabled:opacity-50">Cancel Appointment</button>
+                </form>
+
+                <form action={markNoShowAppointmentAction} className="space-y-2">
+                  <input type="hidden" name="appointmentId" value={String(appointment._id)} />
+                  <button disabled={dbUnavailable} className="w-full border-2 border-black bg-white px-3 py-2 font-semibold disabled:opacity-50">Mark No-show</button>
                 </form>
 
                 <form action={rescheduleAppointmentAction} className="space-y-2">

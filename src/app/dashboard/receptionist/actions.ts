@@ -202,6 +202,27 @@ export async function cancelAppointmentAction(formData: FormData) {
   revalidatePath("/dashboard/doctor");
 }
 
+export async function markNoShowAppointmentAction(formData: FormData) {
+  const session = await requireRole("RECEPTIONIST");
+  await connectToDatabase();
+
+  const appointmentId = String(formData.get("appointmentId") ?? "");
+
+  await AppointmentModel.updateOne(
+    {
+      _id: appointmentId,
+      clinicId: session.user.clinicId,
+    },
+    {
+      status: "NO_SHOW",
+    },
+  );
+
+  revalidatePath("/dashboard/receptionist");
+  revalidatePath("/dashboard/receptionist/appointments");
+  revalidatePath("/dashboard/doctor");
+}
+
 export async function rescheduleAppointmentAction(formData: FormData) {
   const session = await requireRole("RECEPTIONIST");
   await connectToDatabase();
