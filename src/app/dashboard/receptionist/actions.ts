@@ -20,6 +20,14 @@ const patientSchema = z.object({
   notes: z.string().optional(),
 });
 
+const updatePatientSchema = z.object({
+  patientId: z.string().min(1),
+  fullName: z.string().min(2),
+  phone: z.string().min(6),
+  email: z.string().trim().email(),
+  notes: z.string().optional(),
+});
+
 const bookSchema = z.object({
   patientId: z.string().min(1),
   doctorId: z.string().min(1),
@@ -53,6 +61,40 @@ export async function addPatientAction(formData: FormData) {
   });
 
   revalidatePath("/dashboard/receptionist");
+  revalidatePath("/dashboard/receptionist/patients");
+}
+
+export async function updatePatientAction(formData: FormData) {
+  const session = await requireRole("RECEPTIONIST");
+  await connectToDatabase();
+
+  const parsed = updatePatientSchema.safeParse({
+    patientId: formData.get("patientId"),
+    fullName: formData.get("fullName"),
+    phone: formData.get("phone"),
+    email: formData.get("email"),
+    notes: formData.get("notes"),
+  });
+
+  if (!parsed.success) {
+    throw new Error("Invalid patient details.");
+  }
+
+  await PatientModel.updateOne(
+    {
+      _id: parsed.data.patientId,
+      clinicId: session.user.clinicId,
+    },
+    {
+      fullName: parsed.data.fullName,
+      phone: parsed.data.phone,
+      email: parsed.data.email,
+      notes: parsed.data.notes || "",
+    },
+  );
+
+  revalidatePath("/dashboard/receptionist");
+  revalidatePath("/dashboard/receptionist/patients");
 }
 
 export async function createAppointmentAction(formData: FormData) {

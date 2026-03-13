@@ -1,7 +1,7 @@
 import { connectToDatabase } from "@/lib/db";
 import { getPatients } from "@/lib/queries";
 import { requireRole } from "@/lib/server-auth";
-import { addPatientAction } from "@/app/dashboard/receptionist/actions";
+import { addPatientAction, updatePatientAction } from "@/app/dashboard/receptionist/actions";
 
 type ReceptionPatientsPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -20,11 +20,11 @@ export default async function ReceptionPatientsPage({ searchParams }: ReceptionP
   const patientSearch = readValue(params.search);
 
   let dbUnavailable = false;
-  let patients: Array<{ _id: string; fullName: string; phone: string; email?: string }> = [];
+  let patients: Array<{ _id: string; fullName: string; phone: string; email?: string; notes?: string }> = [];
 
   try {
     await connectToDatabase();
-    patients = (await getPatients(patientSearch, session.user.clinicId)) as Array<{ _id: string; fullName: string; phone: string; email?: string }>;
+    patients = (await getPatients(patientSearch, session.user.clinicId)) as Array<{ _id: string; fullName: string; phone: string; email?: string; notes?: string }>;
   } catch {
     dbUnavailable = true;
   }
@@ -53,7 +53,30 @@ export default async function ReceptionPatientsPage({ searchParams }: ReceptionP
           {patients.length === 0 ? <p className="text-sm">No patients found.</p> : null}
           {patients.map((patient) => (
             <article key={String(patient._id)} className="border-2 border-black bg-[var(--panel)] p-3">
-              <p className="font-bold">{patient.fullName}</p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="font-bold">{patient.fullName}</p>
+                <details>
+                  <summary className="cursor-pointer list-none border border-black bg-white px-2 py-1 text-xs font-semibold hover:bg-gray-50">
+                    <span className="inline-flex items-center gap-1">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                      </svg>
+                      Edit
+                    </span>
+                  </summary>
+                  <form action={updatePatientAction} className="mt-2 grid gap-2 border-2 border-black bg-white p-2">
+                    <input type="hidden" name="patientId" value={String(patient._id)} />
+                    <input name="fullName" required defaultValue={patient.fullName} className="border-2 border-black px-2 py-1 text-xs" />
+                    <input name="phone" required defaultValue={patient.phone} className="border-2 border-black px-2 py-1 text-xs" />
+                    <input name="email" type="email" required defaultValue={patient.email || ""} className="border-2 border-black px-2 py-1 text-xs" />
+                    <textarea name="notes" defaultValue={patient.notes || ""} className="border-2 border-black px-2 py-1 text-xs" rows={2} />
+                    <button disabled={dbUnavailable} className="border-2 border-black bg-black px-2 py-1 text-xs font-semibold text-white disabled:opacity-50">
+                      Save Changes
+                    </button>
+                  </form>
+                </details>
+              </div>
               <p className="text-sm">Phone: {patient.phone}</p>
               <p className="text-sm">Email: {patient.email || "N/A"}</p>
             </article>

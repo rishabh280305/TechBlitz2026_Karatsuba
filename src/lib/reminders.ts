@@ -32,12 +32,17 @@ export async function sendAppointmentEmail(params: {
   }
 
   try {
-    await resend.emails.send({
+    const result = await resend.emails.send({
       from: fromEmail,
       to,
       subject: params.subject,
       html: params.html,
     });
+
+    if (result.error) {
+      console.error("Appointment email provider error", result.error);
+      return { skipped: true, reason: "provider-error" };
+    }
   } catch (error) {
     console.error("Appointment email failed", error);
     return { skipped: true, reason: "provider-error" };
