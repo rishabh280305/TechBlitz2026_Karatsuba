@@ -57,11 +57,22 @@ Keep it under 180 words. Use bullet points. Be direct and actionable.`;
   try {
     const openai = getOpenAIClient();
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 400,
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a clinical assistant. Return very short plain text only. No markdown, no headings, no bold.",
+        },
+        {
+          role: "user",
+          content: `${prompt}\n\nFORMAT RULES:\n- Maximum 3 bullet points\n- Maximum 12 words per bullet\n- Focus only: patient count, one key risk, one prep tip\n- Keep total under 45 words`,
+        },
+      ],
+      max_tokens: 120,
+      temperature: 0.2,
     });
-    const summary = completion.choices[0]?.message?.content ?? "Unable to generate summary.";
+    const summary = completion.choices[0]?.message?.content?.trim() ?? "Unable to generate summary.";
     return NextResponse.json({ summary });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "AI service error";

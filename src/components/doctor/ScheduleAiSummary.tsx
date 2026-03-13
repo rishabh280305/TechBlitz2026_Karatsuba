@@ -7,6 +7,28 @@ export function ScheduleAiSummary({ date }: { date: string }) {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(true);
   const [error, setError] = useState("");
+  const [speaking, setSpeaking] = useState(false);
+
+  function handleReadAloud() {
+    if (typeof window === "undefined" || !("speechSynthesis" in window) || !summary) {
+      return;
+    }
+
+    if (speaking) {
+      window.speechSynthesis.cancel();
+      setSpeaking(false);
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(summary.replace(/[-*]/g, " "));
+    utterance.rate = 1;
+    utterance.pitch = 1;
+    utterance.onend = () => setSpeaking(false);
+    utterance.onerror = () => setSpeaking(false);
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+    setSpeaking(true);
+  }
 
   useEffect(() => {
     async function load() {
@@ -58,6 +80,15 @@ export function ScheduleAiSummary({ date }: { date: string }) {
       </button>
       {open && (
         <div className="border-t-2 border-black px-4 py-3">
+          <div className="mb-2">
+            <button
+              type="button"
+              onClick={handleReadAloud}
+              className="border-2 border-black bg-white px-3 py-1 text-xs font-bold hover:bg-gray-100"
+            >
+              {speaking ? "Stop Reading" : "Read Aloud"}
+            </button>
+          </div>
           <pre className="whitespace-pre-wrap font-sans text-xs leading-relaxed text-gray-800">
             {summary}
           </pre>

@@ -70,37 +70,44 @@ export default async function DoctorDashboardPage({ searchParams }: DoctorPagePr
                 <span className="border border-black bg-white px-2 py-1 text-xs font-semibold">{appointment.status}</span>
               </div>
 
-              <p className="text-sm">Phone: {appointment.patientId?.phone || "N/A"}</p>
-              <p className="text-sm">Reason: {appointment.reason || "General consultation"}</p>
-              {appointment.notes ? <p className="text-sm">Notes: {appointment.notes}</p> : null}
+              <details className="mt-3 border-2 border-black bg-white">
+                <summary className="cursor-pointer px-3 py-2 text-sm font-bold hover:bg-gray-50">
+                  Open Appointment
+                </summary>
 
-              <div className="mt-3 grid gap-2 md:grid-cols-2">
-                <form action={completeAppointmentAction} className="space-y-2">
-                  <input type="hidden" name="appointmentId" value={String(appointment._id)} />
-                  <textarea name="notes" placeholder="Visit notes / prescription" className="w-full border-2 border-black bg-white px-3 py-2" />
-                  <button disabled={dbUnavailable} className="w-full border-2 border-black bg-black px-3 py-2 font-semibold text-white disabled:opacity-50">
-                    Mark Completed
-                  </button>
-                </form>
+                <div className="border-t-2 border-black p-3">
+                  <p className="text-sm">Phone: {appointment.patientId?.phone || "N/A"}</p>
+                  <p className="text-sm">Reason: {appointment.reason || "General consultation"}</p>
+                  {appointment.notes ? <p className="text-sm">Notes: {appointment.notes}</p> : null}
 
-                <form action={markNoShowAction} className="space-y-2">
-                  <input type="hidden" name="appointmentId" value={String(appointment._id)} />
-                  <button disabled={dbUnavailable} className="w-full border-2 border-black bg-white px-3 py-2 font-semibold disabled:opacity-50">
-                    Mark No-show
-                  </button>
-                </form>
-              </div>
+                  <div className="mt-3 grid gap-2 md:grid-cols-2">
+                    <form action={completeAppointmentAction} className="space-y-2">
+                      <input type="hidden" name="appointmentId" value={String(appointment._id)} />
+                      <textarea name="notes" placeholder="Visit notes / prescription" className="w-full border-2 border-black bg-white px-3 py-2" />
+                      <button disabled={dbUnavailable} className="w-full border-2 border-black bg-black px-3 py-2 font-semibold text-white disabled:opacity-50">
+                        Mark Completed
+                      </button>
+                    </form>
 
-              {/* Patient Files & AI Summary (client-side) */}
-              {appointment.patientId?._id && (
-                <>
-                  <PatientFilesPanel patientId={String(appointment.patientId._id)} />
-                  <AiSummaryButton
-                    patientId={String(appointment.patientId._id)}
-                    patientName={appointment.patientId?.fullName ?? "Patient"}
-                  />
-                </>
-              )}
+                    <form action={markNoShowAction} className="space-y-2">
+                      <input type="hidden" name="appointmentId" value={String(appointment._id)} />
+                      <button disabled={dbUnavailable} className="w-full border-2 border-black bg-white px-3 py-2 font-semibold disabled:opacity-50">
+                        Mark No-show
+                      </button>
+                    </form>
+                  </div>
+
+                  {appointment.patientId?._id && (
+                    <>
+                      <PatientFilesPanel patientId={String(appointment.patientId._id)} />
+                      <AiSummaryButton
+                        patientId={String(appointment.patientId._id)}
+                        patientName={appointment.patientId?.fullName ?? "Patient"}
+                      />
+                    </>
+                  )}
+                </div>
+              </details>
             </article>
           ))}
         </div>
