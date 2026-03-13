@@ -7,6 +7,9 @@ import {
   completeAppointmentAction,
   markNoShowAction,
 } from "@/app/dashboard/doctor/actions";
+import { ScheduleAiSummary } from "@/components/doctor/ScheduleAiSummary";
+import { PatientFilesPanel } from "@/components/doctor/PatientFilesPanel";
+import { AiSummaryButton } from "@/components/doctor/AiSummaryButton";
 
 type DoctorPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -44,6 +47,8 @@ export default async function DoctorDashboardPage({ searchParams }: DoctorPagePr
           </div>
         ) : null}
 
+        {!dbUnavailable && <ScheduleAiSummary date={dateKey} />}
+
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-lg font-black">Today&apos;s Schedule</h2>
           <form method="GET" className="flex gap-2">
@@ -72,7 +77,7 @@ export default async function DoctorDashboardPage({ searchParams }: DoctorPagePr
               <div className="mt-3 grid gap-2 md:grid-cols-2">
                 <form action={completeAppointmentAction} className="space-y-2">
                   <input type="hidden" name="appointmentId" value={String(appointment._id)} />
-                  <textarea name="notes" placeholder="Visit notes" className="w-full border-2 border-black bg-white px-3 py-2" />
+                  <textarea name="notes" placeholder="Visit notes / prescription" className="w-full border-2 border-black bg-white px-3 py-2" />
                   <button disabled={dbUnavailable} className="w-full border-2 border-black bg-black px-3 py-2 font-semibold text-white disabled:opacity-50">
                     Mark Completed
                   </button>
@@ -85,6 +90,17 @@ export default async function DoctorDashboardPage({ searchParams }: DoctorPagePr
                   </button>
                 </form>
               </div>
+
+              {/* Patient Files & AI Summary (client-side) */}
+              {appointment.patientId?._id && (
+                <>
+                  <PatientFilesPanel patientId={String(appointment.patientId._id)} />
+                  <AiSummaryButton
+                    patientId={String(appointment.patientId._id)}
+                    patientName={appointment.patientId?.fullName ?? "Patient"}
+                  />
+                </>
+              )}
             </article>
           ))}
         </div>
